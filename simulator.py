@@ -61,10 +61,10 @@ def _simulate_one(
                 "type": "meta_info",
                 "new_traffic": [t.meta_info() for t in new_traffic],
             }
-            serving_solution2traffics = lb.step(new_traffic)
+            replica2traffics = lb.step(new_traffic)
             finished_traffics: List[traffic_lib.Traffic] = []
-            for serving_solution, traffics in serving_solution2traffics.items():
-                finished_traffic = serving_solution.step(traffics)
+            for replica, traffics in replica2traffics.items():
+                finished_traffic = replica.step(traffics)
                 finished_traffics.extend(finished_traffic)
             success_traffics = [t for t in finished_traffics if not t.expired]
             failure_traffics = [t for t in finished_traffics if t.expired]
@@ -104,7 +104,7 @@ def dummy_simulate():
                     traffic_expired_time=100.0 / clock_lib.TICK_PERIOD_S,
                 ) for _ in range(3)
             ],
-            lb,
+            lb, # TODO: location for LB
             [
                 replica_lib.AcceleratorReplica(
                     location=utils.GeographicalRegion.US,
