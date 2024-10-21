@@ -47,9 +47,9 @@ def setup_simulation(simulation_config: Dict[str, Any]):
             traffic_expired_time=client.get("traffic_expired_time", 0)
             / clock_lib.TICK_PERIOD_S,
             period_tick=client.get("period_tick", 1),
-            burst_size=client.get('burst_size', 0),
-            burst_interval=client.get('burst_interval', 1),
-            priority_levels=client.get('priority_levels', [1])
+            burst_size=client.get("burst_size", 0),
+            burst_interval=client.get("burst_interval", 1),
+            priority_levels=client.get("priority_levels", [1]),
         )
         for client in clients_config
     ]

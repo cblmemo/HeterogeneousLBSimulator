@@ -175,7 +175,7 @@ class DayAndNightClient(Client, name="day_and_night"):
         }
 
 
-class BurstyClient(Client, name='bursty'):
+class BurstyClient(Client, name="bursty"):
     def __init__(self, burst_size: int, burst_interval: int, **kwargs) -> None:
         super().__init__(**kwargs)
         self.burst_size = burst_size
@@ -183,7 +183,10 @@ class BurstyClient(Client, name='bursty'):
 
     def _observe(self) -> List[traffic_lib.Traffic]:
         if self.tick % self.burst_interval == 0:
-            return [traffic_lib.Traffic(random.randint(1, 5)) for _ in range(self.burst_size)]
+            return [
+                traffic_lib.Traffic(random.randint(1, 5))
+                for _ in range(self.burst_size)
+            ]
         return []
 
     def meta_info(self) -> Dict[str, Any]:
@@ -193,7 +196,8 @@ class BurstyClient(Client, name='bursty'):
             "burst_interval": self.burst_interval,
         }
 
-class PriorityClient(Client, name='priority'):
+
+class PriorityClient(Client, name="priority"):
     def __init__(self, priority_levels: List[int], **kwargs) -> None:
         super().__init__(**kwargs)
         self.priority_levels = priority_levels
