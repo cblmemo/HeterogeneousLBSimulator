@@ -66,12 +66,12 @@ def _simulate_one(
             for replica, traffics in replica2traffics.items():
                 finished_traffic = replica.step(traffics)
                 finished_traffics.extend(finished_traffic)
-            success_traffics = [t for t in finished_traffics if not t.expired]
-            failure_traffics = [t for t in finished_traffics if t.expired]
             info = {
                 "type": "tick_info",
                 "tick": tick,
-                "finished_traffics": [(t.id, t.latency(), t.expired) for t in finished_traffics],  # type: ignore # pylint: disable=no-member
+                "finished_traffics": [
+                    (t.id, t.latency(), t.expired) for t in finished_traffics  # type: ignore # pylint: disable=no-member
+                ],
                 "lb_info": lb.info(),
             }
             f.write(json.dumps(info) + "\n")
@@ -102,19 +102,22 @@ def dummy_simulate():
                     location=utils.GeographicalRegion.US,
                     workload_candidates=list(range(1, 4)),
                     traffic_expired_time=100.0 / clock_lib.TICK_PERIOD_S,
-                ) for _ in range(3)
+                )
+                for _ in range(3)
             ],
-            lb, # TODO: location for LB
+            lb,  # TODO: location for LB
             [
                 replica_lib.AcceleratorReplica(
                     location=utils.GeographicalRegion.US,
                     accelerator=utils.AcceleratorType.A100,
                 ),
-            ] + [
+            ]
+            + [
                 replica_lib.AcceleratorReplica(
                     location=utils.GeographicalRegion.ASIA,
                     accelerator=utils.AcceleratorType.T4,
-                ) for _ in range(4)
+                )
+                for _ in range(4)
             ],
             output_path="res/temp.jsonl",
             max_tick=3000,
@@ -127,17 +130,22 @@ def dummy_simulate():
             for line in f.readlines():
                 info = json.loads(line)
                 if info["type"] == "tick_info":
-                    for tid, lat, expired in info["finished_traffics"]:
+                    for _, lat, expired in info["finished_traffics"]:
                         if expired:
                             failure += 1
                         else:
                             latencies.append(lat)
-                    # print(list((len(r["queue"]), r["accelerator"]) for r in info["lb_info"]["replicas"]))
         print(f"Failure rate: {failure / (len(latencies) + failure):.2f}")
         print(f"Average latency: {sum(latencies) / len(latencies):.2f}")
-        print(f"95th percentile latency: {sorted(latencies)[int(len(latencies) * 0.95)]}")
-        print(f"99th percentile latency: {sorted(latencies)[int(len(latencies) * 0.99)]}")
-        print(f"99.9th percentile latency: {sorted(latencies)[int(len(latencies) * 0.999)]}")
+        print(
+            f"95th percentile latency: {sorted(latencies)[int(len(latencies) * 0.95)]}"
+        )
+        print(
+            f"99th percentile latency: {sorted(latencies)[int(len(latencies) * 0.99)]}"
+        )
+        print(
+            f"99.9th percentile latency: {sorted(latencies)[int(len(latencies) * 0.999)]}"
+        )
 
 
 if __name__ == "__main__":

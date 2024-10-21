@@ -14,8 +14,11 @@ if typing.TYPE_CHECKING:
 LB_POLICIES = {}
 DEFAULT_LB_POLICY = None
 
+
 class LoadBalancer:
     """Abstract class for load balancing policies."""
+
+    _default_lb_policy = None
 
     def __init__(self) -> None:
         self.clock: Optional["clock_lib.Clock"] = None
@@ -24,19 +27,17 @@ class LoadBalancer:
     def __init_subclass__(cls, name: str, default: bool = False):
         LB_POLICIES[name] = cls
         if default:
-            global DEFAULT_LB_POLICY
-            assert DEFAULT_LB_POLICY is None, (
-                'Only one policy can be default.')
-            DEFAULT_LB_POLICY = name
+            assert cls._default_lb_policy is None, "Only one policy can be default."
+            cls._default_lb_policy = name
 
     @classmethod
-    def make(cls, policy_name: Optional[str] = None) -> 'LoadBalancer':
+    def make(cls, policy_name: Optional[str] = None) -> "LoadBalancer":
         """Create a load balancing policy from a name."""
         if policy_name is None:
-            policy_name = DEFAULT_LB_POLICY
+            policy_name = cls._default_lb_policy
 
         if policy_name not in LB_POLICIES:
-            raise ValueError(f'Unknown load balancing policy: {policy_name}')
+            raise ValueError(f"Unknown load balancing policy: {policy_name}")
         return LB_POLICIES[policy_name]()
 
     def register_clock(self, clock: "clock_lib.Clock") -> None:
@@ -71,7 +72,7 @@ class LoadBalancer:
         }
 
 
-class RoundRobinLoadBalancer(LoadBalancer, name='round_robin', default=True):
+class RoundRobinLoadBalancer(LoadBalancer, name="round_robin", default=True):
     """Round-robin load balancing policy."""
 
     def __init__(self) -> None:
@@ -100,7 +101,7 @@ class RoundRobinLoadBalancer(LoadBalancer, name='round_robin', default=True):
         return "RoundRobinLoadBalancer"
 
 
-class LeastLoadLoadBalancer(LoadBalancer, name='least_load'):
+class LeastLoadLoadBalancer(LoadBalancer, name="least_load"):
     """Least-load load balancing policy."""
 
     def step(
@@ -109,8 +110,10 @@ class LeastLoadLoadBalancer(LoadBalancer, name='least_load'):
         replica2traffics: Dict[replica_lib.Replica, List[traffic_lib.Traffic]] = {
             replica: [] for replica in self.replicas
         }
+
         def _get_replica_queue_length(replica: replica_lib.Replica) -> int:
             return len(replica.queue) + len(replica2traffics[replica])
+
         for t in traffic:
             sel = min(self.replicas, key=_get_replica_queue_length)
             replica2traffics[sel].append(t)

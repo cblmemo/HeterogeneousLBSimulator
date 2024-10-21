@@ -8,8 +8,11 @@ import utils
 REPLICA_TYPES = {}
 DEFAULT_REPLICA_TYPE = None
 
+
 @utils.add_unique_id
 class Replica:
+    _default_replica_type = None  # Add this line
+
     def __init__(self, location: utils.GeographicalRegion) -> None:
         self.location = location
         self.clock: Optional["clock_lib.Clock"] = None
@@ -18,19 +21,19 @@ class Replica:
     def __init_subclass__(cls, name: str, default: bool = False):
         REPLICA_TYPES[name] = cls
         if default:
-            global DEFAULT_REPLICA_TYPE
-            assert DEFAULT_REPLICA_TYPE is None, (
-                'Only one replica type can be default.')
-            DEFAULT_REPLICA_TYPE = name
+            assert (
+                cls._default_replica_type is None
+            ), "Only one replica type can be default."
+            cls._default_replica_type = name
 
     @classmethod
-    def make(cls, replica_type: Optional[str] = None, **kwargs) -> 'Replica':
+    def make(cls, replica_type: Optional[str] = None, **kwargs) -> "Replica":
         """Create a replica from a type name."""
         if replica_type is None:
             replica_type = DEFAULT_REPLICA_TYPE
 
         if replica_type not in REPLICA_TYPES:
-            raise ValueError(f'Unknown replica type: {replica_type}')
+            raise ValueError(f"Unknown replica type: {replica_type}")
         return REPLICA_TYPES[replica_type](**kwargs)
 
     def register_clock(self, clock: "clock_lib.Clock") -> None:
@@ -74,7 +77,7 @@ class Replica:
         }
 
 
-class AcceleratorReplica(Replica, name='accelerator', default=True):
+class AcceleratorReplica(Replica, name="accelerator", default=True):
     def __init__(
         self,
         location: utils.GeographicalRegion,
@@ -91,7 +94,10 @@ class AcceleratorReplica(Replica, name='accelerator', default=True):
         # TODO: Continuous batching.
         tot_compute_used = 0
         for traffic in self.queue:
-            compute_on_traffic = min(traffic.remaining_processing_time - tot_compute_used, self.accelerator.value)
+            compute_on_traffic = min(
+                traffic.remaining_processing_time - tot_compute_used,
+                self.accelerator.value,
+            )
             traffic.remaining_processing_time -= compute_on_traffic
             tot_compute_used += compute_on_traffic
             if tot_compute_used == self.accelerator.value:
