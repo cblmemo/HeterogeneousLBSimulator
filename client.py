@@ -176,7 +176,14 @@ class DayAndNightClient(Client, name="day_and_night"):
 
 
 class BurstyClient(Client, name="bursty"):
-    def __init__(self, burst_size: int, burst_interval: int, min_traffic: int = 1, max_traffic: int = 10, **kwargs) -> None:
+    def __init__(
+        self,
+        burst_size: int,
+        burst_interval: int,
+        min_traffic: int = 1,
+        max_traffic: int = 10,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
         self.burst_size = burst_size
         self.burst_interval = burst_interval
