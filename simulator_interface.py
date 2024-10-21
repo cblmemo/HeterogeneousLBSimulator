@@ -50,6 +50,8 @@ def setup_simulation(simulation_config: Dict[str, Any]):
             burst_size=client.get("burst_size", 0),
             burst_interval=client.get("burst_interval", 1),
             priority_levels=client.get("priority_levels", [1]),
+            min_traffic=client.get("min_traffic", 1),
+            max_traffic=client.get("max_traffic", 10),
         )
         for client in clients_config
     ]

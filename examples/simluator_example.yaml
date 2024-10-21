@@ -67,6 +67,28 @@ clients:
     traffic_expired_time: 300
     period_tick: 1
 
+  # BurstyClient: Sends bursts of traffic at regular intervals
+  - type: "bursty"
+    location: "ASIA"
+    # Number of traffic objects in each burst
+    burst_size: 5
+    # Interval between bursts in ticks
+    burst_interval: 20
+    # Minimum traffic workload in a burst (Optional, default: 1)
+    min_traffic: 1
+    # Maximum traffic workload in a burst (Optional, default: 10)
+    max_traffic: 10
+    traffic_expired_time: 250
+    period_tick: 5
+
+  # PriorityClient: Sends traffic with different priority levels
+  - type: "priority"
+    location: "ASIA"
+    # List of possible priority levels
+    priority_levels: [1, 2, 3, 4, 5]
+    traffic_expired_time: 300
+    period_tick: 7
+
 # Load balancer configuration
 load_balancer:
   # Type of load balancing policy to use (Optional, defaults to default policy)
