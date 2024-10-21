@@ -1,0 +1,90 @@
+# This is an example file that illustrates how the YAML interface can be used
+# and provides an example of a simulator configuration.
+
+# Simulation configuration settings
+simulation:
+  # Path where the simulation results will be saved. Must end with .jsonl
+  output_path: "results/simulation_output.jsonl"
+  # Maximum number of ticks the simulation will run (Optional, default: 1000)
+  max_tick: 2000
+  # Number of ticks to advance in each simulation step (Optional, default: 1)
+  step_tick: 10
+  # Whether the simulation should run in interactive mode (Optional, default: false)
+  interactive: false
+  # Whether to display a progress bar during the simulation (Optional, default: true)
+  with_pbar: true
+
+# Client configurations
+clients:
+  # FixedTrafficClient: Sends a fixed sequence of traffic
+  - type: "fixed_traffic"
+    # Geographical location of the client
+    location: "US"
+    # List of traffic objects with execution and expiration times (Optional)
+    traffics:
+      - execution_time: 5
+        expired_time: 50
+      - execution_time: 10
+        expired_time: 100
+    # Time after which traffic is considered expired (Optional, default: 0)
+    traffic_expired_time: 100
+    # Number of ticks between each traffic generation (Optional, default: 1)
+    period_tick: 5
+
+  # RandomChoiceWorkloadClient: Sends traffic with random workload from candidates
+  - type: "random_choice"
+    location: "ASIA"
+    # List of possible workloads to choose from (Optional)
+    workload_candidates: [1, 2, 3, 4, 5]
+    traffic_expired_time: 200
+    period_tick: 10
+
+  # RandomSendRequestClient: Sends traffic based on a probability
+  - type: "random_send_request"
+    location: "US"
+    # Probability of sending a request (Optional, default: 0.0)
+    prob: 0.3
+    # Workload of the request if sent (Optional, default: 0)
+    workload: 2
+    traffic_expired_time: 150
+    period_tick: 3
+
+  # DayAndNightClient: Sends traffic with different probabilities for day and night
+  - type: "day_and_night"
+    location: "ASIA"
+    # Probability of sending a request during the day (Optional, default: 0.0)
+    day_prob: 0.7
+    # Probability of sending a request during the night (Optional, default: 0.0)
+    night_prob: 0.2
+    # Workload of the request (Optional, default: 0)
+    workload: 3
+    # Number of ticks representing day time (Optional, default: 0)
+    day_tick: 12
+    # Number of ticks representing night time (Optional, default: 0)
+    night_tick: 12
+    # Number of requests to send if probability condition is met (Optional, default: 1)
+    num_req: 2
+    traffic_expired_time: 300
+    period_tick: 1
+
+# Load balancer configuration
+load_balancer:
+  # Type of load balancing policy to use (Optional, defaults to default policy)
+  type: "round_robin"
+
+# Replica configurations
+replicas:
+  # AcceleratorReplica: Represents a replica with an accelerator
+  - type: "accelerator"
+    # Geographical location of the replica
+    location: "US"
+    # Type of accelerator used by the replica (Optional)
+    accelerator: "A100"
+
+  - type: "accelerator"
+    location: "ASIA"
+    accelerator: "T4"
+
+  - type: "accelerator"
+    location: "US"
+    accelerator: "T4"

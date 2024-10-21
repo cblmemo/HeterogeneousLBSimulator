@@ -1,9 +1,12 @@
-from typing import Any, DefaultDict, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import clock as clock_lib
 import traffic as traffic_lib
 import utils
 
+# Define a registry for replica types
+REPLICA_TYPES = {}
+DEFAULT_REPLICA_TYPE = None
 
 @utils.add_unique_id
 class Replica:
@@ -11,6 +14,24 @@ class Replica:
         self.location = location
         self.clock: Optional["clock_lib.Clock"] = None
         self.queue: List[traffic_lib.Traffic] = []
+
+    def __init_subclass__(cls, name: str, default: bool = False):
+        REPLICA_TYPES[name] = cls
+        if default:
+            global DEFAULT_REPLICA_TYPE
+            assert DEFAULT_REPLICA_TYPE is None, (
+                'Only one replica type can be default.')
+            DEFAULT_REPLICA_TYPE = name
+
+    @classmethod
+    def make(cls, replica_type: Optional[str] = None, **kwargs) -> 'Replica':
+        """Create a replica from a type name."""
+        if replica_type is None:
+            replica_type = DEFAULT_REPLICA_TYPE
+
+        if replica_type not in REPLICA_TYPES:
+            raise ValueError(f'Unknown replica type: {replica_type}')
+        return REPLICA_TYPES[replica_type](**kwargs)
 
     def register_clock(self, clock: "clock_lib.Clock") -> None:
         self.clock = clock
@@ -53,7 +74,7 @@ class Replica:
         }
 
 
-class AcceleratorReplica(Replica):
+class AcceleratorReplica(Replica, name='accelerator', default=True):
     def __init__(
         self,
         location: utils.GeographicalRegion,

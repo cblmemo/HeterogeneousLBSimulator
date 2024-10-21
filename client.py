@@ -9,19 +9,35 @@ import utils
 if typing.TYPE_CHECKING:
     import clock as clock_lib
 
+# Define a registry for client types
+CLIENT_TYPES = {}
+DEFAULT_CLIENT_TYPE = None
 
 @utils.add_unique_id
 class Client:
-    def __init__(
-        self,
-        location: utils.GeographicalRegion,
-        traffic_expired_time: Optional[int] = None,
-        period_tick: Optional[int] = None,
-    ) -> None:
+    def __init__(self, **kwargs) -> None:
         self.clock: Optional["clock_lib.Clock"] = None
-        self.location = location
-        self.traffic_expired_time = traffic_expired_time
-        self.period_tick = period_tick or 1
+        self.location = kwargs.pop('location', None)
+        self.traffic_expired_time = kwargs.pop('traffic_expired_time', None)
+        self.period_tick = kwargs.pop('period_tick', 1)
+
+    def __init_subclass__(cls, name: str, default: bool = False):
+        CLIENT_TYPES[name] = cls
+        if default:
+            global DEFAULT_CLIENT_TYPE
+            assert DEFAULT_CLIENT_TYPE is None, (
+                'Only one client type can be default.')
+            DEFAULT_CLIENT_TYPE = name
+
+    @classmethod
+    def make(cls, client_type: Optional[str] = None, **kwargs) -> 'Client':
+        """Create a client from a type name."""
+        if client_type is None:
+            client_type = DEFAULT_CLIENT_TYPE
+
+        if client_type not in CLIENT_TYPES:
+            raise ValueError(f'Unknown client type: {client_type}')
+        return CLIENT_TYPES[client_type](**kwargs)
 
     def register_clock(self, clock: "clock_lib.Clock") -> None:
         self.clock = clock
@@ -52,7 +68,7 @@ class Client:
         raise NotImplementedError
 
     def meta_info(self) -> Dict[str, Any]:
-        """Return the information of this load balancer.
+        """Return the information of this client.
 
         Returns:
             A dict of information.
@@ -66,15 +82,9 @@ class Client:
         }
 
 
-class FixedTrafficClient(Client):
-    def __init__(
-        self,
-        traffics: List[Optional[traffic_lib.Traffic]],
-        location: utils.GeographicalRegion,
-        traffic_expired_time: Optional[int] = None,
-        period_tick: Optional[int] = None,
-    ) -> None:
-        super().__init__(location, traffic_expired_time, period_tick)
+class FixedTrafficClient(Client, name='fixed_traffic', default=True):
+    def __init__(self, traffics: List[Optional[traffic_lib.Traffic]], **kwargs) -> None:
+        super().__init__(**kwargs)
         self.traffics = traffics
         self.idx = 0
 
@@ -92,15 +102,9 @@ class FixedTrafficClient(Client):
         }
 
 
-class RandomChoiceWorkloadClient(Client):
-    def __init__(
-        self,
-        workload_candidates: List[int],
-        location: utils.GeographicalRegion,
-        traffic_expired_time: Optional[int] = None,
-        period_tick: Optional[int] = None,
-    ) -> None:
-        super().__init__(location, traffic_expired_time, period_tick)
+class RandomChoiceWorkloadClient(Client, name='random_choice'):
+    def __init__(self, workload_candidates: List[int], **kwargs) -> None:
+        super().__init__(**kwargs)
         self.workload_candidates = workload_candidates
 
     def _observe(self) -> List[traffic_lib.Traffic]:
@@ -113,16 +117,9 @@ class RandomChoiceWorkloadClient(Client):
         }
 
 
-class RandomSendRequestClient(Client):
-    def __init__(
-        self,
-        prob: float,
-        workload: int,
-        location: utils.GeographicalRegion,
-        traffic_expired_time: Optional[int] = None,
-        period_tick: Optional[int] = None,
-    ) -> None:
-        super().__init__(location, traffic_expired_time, period_tick)
+class RandomSendRequestClient(Client, name='random_send_request'):
+    def __init__(self, prob: float, workload: int, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.prob = prob
         self.workload = workload
 
@@ -139,20 +136,9 @@ class RandomSendRequestClient(Client):
         }
 
 
-class DayAndNightClient(Client):
-    def __init__(
-        self,
-        day_prob: float,
-        night_prob: float,
-        workload: int,
-        day_tick: int,
-        night_tick: int,
-        num_req: int,
-        location: utils.GeographicalRegion,
-        traffic_expired_time: Optional[int] = None,
-        period_tick: Optional[int] = None,
-    ) -> None:
-        super().__init__(location, traffic_expired_time, period_tick)
+class DayAndNightClient(Client, name='day_and_night'):
+    def __init__(self, day_prob: float, night_prob: float, workload: int, day_tick: int, night_tick: int, num_req: int, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.day_prob = day_prob
         self.night_prob = night_prob
         self.workload = workload
