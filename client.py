@@ -13,30 +13,33 @@ if typing.TYPE_CHECKING:
 CLIENT_TYPES = {}
 DEFAULT_CLIENT_TYPE = None
 
+
 @utils.add_unique_id
 class Client:
+    _default_client_type = None
+
     def __init__(self, **kwargs) -> None:
         self.clock: Optional["clock_lib.Clock"] = None
-        self.location = kwargs.pop('location', None)
-        self.traffic_expired_time = kwargs.pop('traffic_expired_time', None)
-        self.period_tick = kwargs.pop('period_tick', 1)
+        self.location = kwargs.pop("location", None)
+        self.traffic_expired_time = kwargs.pop("traffic_expired_time", None)
+        self.period_tick = kwargs.pop("period_tick", 1)
 
     def __init_subclass__(cls, name: str, default: bool = False):
         CLIENT_TYPES[name] = cls
         if default:
-            global DEFAULT_CLIENT_TYPE
-            assert DEFAULT_CLIENT_TYPE is None, (
-                'Only one client type can be default.')
-            DEFAULT_CLIENT_TYPE = name
+            assert (
+                cls._default_client_type is None
+            ), "Only one client type can be default."
+            cls._default_client_type = name
 
     @classmethod
-    def make(cls, client_type: Optional[str] = None, **kwargs) -> 'Client':
+    def make(cls, client_type: Optional[str] = None, **kwargs) -> "Client":
         """Create a client from a type name."""
         if client_type is None:
-            client_type = DEFAULT_CLIENT_TYPE
+            client_type = cls._default_client_type
 
         if client_type not in CLIENT_TYPES:
-            raise ValueError(f'Unknown client type: {client_type}')
+            raise ValueError(f"Unknown client type: {client_type}")
         return CLIENT_TYPES[client_type](**kwargs)
 
     def register_clock(self, clock: "clock_lib.Clock") -> None:
@@ -82,7 +85,7 @@ class Client:
         }
 
 
-class FixedTrafficClient(Client, name='fixed_traffic', default=True):
+class FixedTrafficClient(Client, name="fixed_traffic", default=True):
     def __init__(self, traffics: List[Optional[traffic_lib.Traffic]], **kwargs) -> None:
         super().__init__(**kwargs)
         self.traffics = traffics
@@ -102,7 +105,7 @@ class FixedTrafficClient(Client, name='fixed_traffic', default=True):
         }
 
 
-class RandomChoiceWorkloadClient(Client, name='random_choice'):
+class RandomChoiceWorkloadClient(Client, name="random_choice"):
     def __init__(self, workload_candidates: List[int], **kwargs) -> None:
         super().__init__(**kwargs)
         self.workload_candidates = workload_candidates
@@ -117,7 +120,7 @@ class RandomChoiceWorkloadClient(Client, name='random_choice'):
         }
 
 
-class RandomSendRequestClient(Client, name='random_send_request'):
+class RandomSendRequestClient(Client, name="random_send_request"):
     def __init__(self, prob: float, workload: int, **kwargs) -> None:
         super().__init__(**kwargs)
         self.prob = prob
@@ -136,8 +139,17 @@ class RandomSendRequestClient(Client, name='random_send_request'):
         }
 
 
-class DayAndNightClient(Client, name='day_and_night'):
-    def __init__(self, day_prob: float, night_prob: float, workload: int, day_tick: int, night_tick: int, num_req: int, **kwargs) -> None:
+class DayAndNightClient(Client, name="day_and_night"):
+    def __init__(
+        self,
+        day_prob: float,
+        night_prob: float,
+        workload: int,
+        day_tick: int,
+        night_tick: int,
+        num_req: int,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
         self.day_prob = day_prob
         self.night_prob = night_prob
